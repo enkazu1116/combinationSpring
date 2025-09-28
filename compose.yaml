@@ -7,15 +7,22 @@ services:
     tty: true
     volumes:
       - ./server:/srv:cached
-    workin_dir: /srv
+    working_dir: /srv
     depends_on:
       - db
 
-  postgres:
-    image: 'postgres:latest'
+  db:
+    image: postgres:18.0
+    container_name: db
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - '5432'
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init-scripts:/docker-entrypoint-initdb.d
+
+volumes:
+  postgres_data:
