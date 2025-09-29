@@ -3,6 +3,7 @@ FROM bellsoft/liberica-openjdk-debian:25
 WORKDIR /srv
 ENV LANG=ja_JP.UTF-8
 
-RUN apk add --no-cache bash curl git
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl git && rm -rf /var/lib/apt/lists/*
 
-CMD ["java", "-jar", "/srv/app.jar"]
+COPY build/libs/combinationSpring-0.0.1-SNAPSHOT.jar /srv/app.jar
+CMD ["java","-jar","/srv/app.jar"]
