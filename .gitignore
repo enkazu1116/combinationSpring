@@ -6,6 +6,7 @@ build/
 !**/src/test/**/build/
 .env.dev
 .env.prod
+/react_prc
 
 ### STS ###
 .apt_generated
