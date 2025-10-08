@@ -7,6 +7,8 @@ const root = createRoot(
 
 root.render(
   <>
-    <HeaderTitle />
+    <HeaderTitle>
+      <span key="title">hello world</span>
+    </HeaderTitle>
   </>
 )
