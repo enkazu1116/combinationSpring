@@ -120,3 +120,45 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ===== Cosmo Theme Customizations (コスモテーマのカスタマイズ) =====
+   - 目的: shadcn/uiのトークンに寄せつつ、宇宙を感じる配色と動きを付与
+   - 変更点: コスモ系の色相(群青/紫/シアン)とグロー、星の瞬き、流星のアニメを追加
+*/
+
+@layer utilities {
+  /* コスモ色: 深宇宙の青〜紫のグラデーション */
+  .cosmo-gradient {
+    background: radial-gradient(1200px 600px at 10% 20%, oklch(0.22 0.14 270) 0%, transparent 60%),
+                radial-gradient(1000px 500px at 90% 10%, oklch(0.3 0.1 320) 0%, transparent 55%),
+                radial-gradient(900px 700px at 70% 80%, oklch(0.35 0.1 240) 0%, transparent 60%),
+                linear-gradient(180deg, oklch(0.18 0.06 270), oklch(0.12 0.04 270));
+  }
+
+  /* 星のグロー: 輝度が呼吸するように変化 */
+  .cosmo-glow {
+    box-shadow: 0 0 40px 10px oklch(0.9 0.12 250 / 20%), 0 0 120px 30px oklch(0.9 0.12 290 / 12%);
+  }
+
+  /* 星屑の点滅アニメーション */
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.7; transform: scale(1) translateZ(0); }
+    50% { opacity: 1; transform: scale(1.08) translateZ(0); }
+  }
+  .twinkle {
+    animation: twinkle 3s ease-in-out infinite;
+  }
+
+  /* 流星の軌跡アニメーション */
+  @keyframes meteor {
+    0% { transform: translate3d(0,0,0) rotate(45deg); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translate3d(-120vw, 120vh, 0) rotate(45deg); opacity: 0; }
+  }
+  .meteor {
+    width: 2px; height: 120px; background: linear-gradient(180deg, oklch(0.95 0.11 250), transparent);
+    filter: blur(0.5px);
+    animation: meteor 6s linear infinite;
+  }
+}
+
