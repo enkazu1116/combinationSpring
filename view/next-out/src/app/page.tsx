@@ -88,21 +88,51 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Spring Modulith の説明 */}
+        <section className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Spring Modulith + Turso DB</h2>
+          <div className="space-y-3 text-gray-700">
+            <p>
+              このアプリケーションは <strong>Spring Modulith</strong> を使用したモジュラーモノリスアーキテクチャのデモです。
+            </p>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="font-semibold mb-2">実装されているドメイン：</h3>
+              <ul className="list-disc list-inside space-y-1">
+                <li><strong>Order ドメイン</strong>：注文管理（作成、更新、削除）</li>
+                <li><strong>Product ドメイン</strong>：商品管理（在庫管理）</li>
+              </ul>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h3 className="font-semibold mb-2">イベント駆動アーキテクチャ：</h3>
+              <p className="text-sm">
+                注文が作成されると <code className="bg-gray-200 px-2 py-1 rounded">OrderCreatedEvent</code> が発行され、
+                Product ドメインが自動的にイベントを受け取り在庫を更新します。
+              </p>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h3 className="font-semibold mb-2">データベース：</h3>
+              <p className="text-sm">
+                <strong>Turso (SQLite)</strong> を使用し、軽量で高速なデータストレージを実現しています。
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* ナビゲーションリンク */}
         <section className="text-center">
-          <h2 className="text-2xl font-semibold mb-4">他のページを探索</h2>
+          <h2 className="text-2xl font-semibold mb-4">アプリケーションを試す</h2>
           <div className="flex flex-wrap justify-center gap-4">
             <Link 
-              href="/about" 
+              href="/products" 
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              アバウトページへ
+              📦 商品管理
             </Link>
             <Link 
-              href="/api-demo" 
+              href="/orders" 
               className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
             >
-              API ルートデモ
+              🛒 注文管理
             </Link>
           </div>
         </section>
