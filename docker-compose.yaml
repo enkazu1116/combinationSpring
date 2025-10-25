@@ -1,7 +1,77 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  # PostgreSQL Database (本番環境用の例として残す)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: combinationspring-backend:latest
+    container_name: combinationspring-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/combinationspring
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: "6379"
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./next_practice
+      dockerfile: Dockerfile
+    image: combinationspring-frontend:latest
+    container_name: combinationspring-frontend
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: http://backend:8080
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.48.2-jammy
+    container_name: combinationspring-playwright
+    depends_on:
+      frontend:
+        condition: service_started
+    working_dir: /workspace
+    entrypoint: ["tail", "-f", "/dev/null"]
+    shm_size: "1gb"
+    volumes:
+      - ./next_practice:/workspace
+      - playwright-cache:/root/.cache/ms-playwright
+    networks:
+      - app-network
+
+  selenium:
+    image: selenium/standalone-chromium:129.0
+    container_name: combinationspring-selenium
+    shm_size: 2gb
+    environment:
+      SE_NODE_MAX_SESSIONS: 4
+      SE_NODE_SESSION_TIMEOUT: 120
+    ports:
+      - "4444:4444"
+      - "7900:7900"
+    networks:
+      - app-network
+
   postgres:
     image: postgres:16-alpine
     container_name: combinationspring-postgres
@@ -13,6 +83,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init-scripts:/docker-entrypoint-initdb.d:ro
     networks:
       - app-network
     healthcheck:
@@ -21,24 +92,39 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis Cache & Distributed Lock
+  pgadmin:
+    image: dpage/pgadmin4:8.10
+    container_name: combinationspring-pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - app-network
+
   redis:
     image: redis:7-alpine
     container_name: combinationspring-redis
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - app-network
-    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Zookeeper (Kafka依存)
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: combinationspring-zookeeper
@@ -55,7 +141,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Kafka Broker
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: combinationspring-kafka
@@ -72,7 +157,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     networks:
       - app-network
     healthcheck:
@@ -81,23 +166,21 @@ services:
       timeout: 10s
       retries: 5
 
-  # Kafka UI (管理画面)
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: combinationspring-kafka-ui
     depends_on:
       kafka:
         condition: service_healthy
-    ports:
-      - "8090:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    ports:
+      - "8090:8080"
     networks:
       - app-network
 
-  # Redis Commander (管理画面)
   redis-commander:
     image: rediscommander/redis-commander:latest
     container_name: combinationspring-redis-commander
@@ -111,11 +194,29 @@ services:
     networks:
       - app-network
 
+  localstack:
+    image: localstack/localstack:3.7
+    container_name: combinationspring-localstack
+    environment:
+      SERVICES: sqs,sns,lambda,s3,cloudwatch,iam,events
+      AWS_DEFAULT_REGION: ap-northeast-1
+      EDGE_PORT: 4566
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
 
 volumes:
   postgres_data:
+  pgadmin_data:
   redis_data:
-
+  localstack_data:
+  playwright-cache:
