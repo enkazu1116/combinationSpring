@@ -1,9 +1,28 @@
-FROM bellsoft/liberica-openjdk-debian:25
+FROM gradle:8.10-jdk21-alpine AS builder
 
-WORKDIR /srv
-ENV LANG=ja_JP.UTF-8
+WORKDIR /workspace
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl git && rm -rf /var/lib/apt/lists/*
+COPY gradlew settings.gradle build.gradle ./
+COPY gradle ./gradle
+RUN chmod +x gradlew
 
-COPY build/libs/combinationSpring-0.0.1-SNAPSHOT.jar /srv/app.jar
-CMD ["java","-jar","/srv/app.jar"]
+COPY src ./src
+
+RUN ./gradlew bootJar --no-daemon
+
+FROM eclipse-temurin:21-jre-alpine
+
+ENV JAVA_OPTS="" \
+    TZ=Asia/Tokyo
+
+WORKDIR /app
+
+RUN addgroup -S spring && adduser -S spring -G spring
+
+COPY --from=builder /workspace/build/libs/*.jar ./app.jar
+
+USER spring
+
+EXPOSE 8080
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
