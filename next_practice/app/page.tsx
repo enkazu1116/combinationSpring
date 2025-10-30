@@ -29,6 +29,9 @@ export default function HomePage() {
           <Button asChild size="lg" className="backdrop-blur">
             <Link href="/redux-demo">Redux デモを見る</Link>
           </Button>
+          <Button asChild variant="secondary" size="lg" className="backdrop-blur">
+            <Link href="/sample-ui">UI サンプルを見る</Link>
+          </Button>
           <Button variant="secondary" size="lg" className="backdrop-blur">
             <Link href="https://nextjs.org" target="_blank" rel="noreferrer">Next.js</Link>
           </Button>
